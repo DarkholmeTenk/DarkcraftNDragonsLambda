@@ -1,0 +1,11 @@
+{
+  "lambda": {
+    "role": "dnd_lambda",
+    "name": "lambda_test",
+    "region": "eu-west-1"
+  },
+  "api": {
+    "id": "05zs4y173f",
+    "module": "index"
+  }
+}
