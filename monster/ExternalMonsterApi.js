@@ -1,4 +1,5 @@
 const fetch = require('node-fetch')
+const SpellcastingParser = require('../util/SpellcastingParser')
 
 var exports = module.exports = {}
 
@@ -9,9 +10,67 @@ function fetchNames() {
         .then(r=>r.json())
 }
 
+function getAbilityBlock(object, suffix)
+{
+    const rObj = {}
+    rObj.str = object['intelligence'+suffix]
+    rObj.dex = object['dexterity'+suffix]
+    rObj.con = object['constitution'+suffix]
+    rObj.int = object['intelligence'+suffix]
+    rObj.wis = object['wisdom'+suffix]
+    rObj.chr = object['charisma'+suffix]
+    return rObj
+}
+
+function split(text)
+{
+    if(!text)
+        return [];
+    return text.split(',')
+        .map(s=>s.trim())
+        .filter(s=>s != "")
+}
+
+function getPP(senses)
+{
+    return senses.map(s=>s.toLowerCase().match("passive perception (\\d+)"))
+        .filter(s=>s)
+        .map(s=>s[1])[0] || 0;
+}
+
+function getSpellcasting(features)
+{
+    return features.map(f=>{
+            try {
+                return SpellcastingParser.parse(f)
+            } catch (error) {}
+        })
+        .find(f=>f)
+}
+
 function parseMonster(monster) {
     monster.parsed="123456"
-    return monster;
+    return {
+        name: monster.name,
+        size: monster.size.toUpperCase(),
+        type: monster.type.toUpperCase(),
+        abilities: getAbilityBlock(monster, ''),
+        savingThrows: getAbilityBlock(monster, '_save'),
+        ac: monster.armor_class,
+        cr: monster.challenge_rating,
+        maxHP: monster.hit_points,
+        hitDice: monster.hit_dice,
+        languages: split(monster.languages),
+        senses: split(monster.senses),
+        vulnerabilities: split(monster.damage_vulnerabilities),
+        resistances: split(monster.damage_resistances),
+        damageImmunities: split(monster.damage_immunities),
+        conditionImmunities: split(monster.conditionImmunities),
+        actions: monster.actions,
+        specialAbilities: monster.special_abilities,
+        legendaryActions: monster.legendary_actions,
+        pp: getPP(split(monster.senses))
+    }
 }
 
 function getMonster(id) {
